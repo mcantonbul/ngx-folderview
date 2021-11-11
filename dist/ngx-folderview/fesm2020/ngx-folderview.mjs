@@ -316,4 +316,3 @@ i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "13.0.0", ngImpor
  */
 
 export { NgxFolderviewComponent, NgxFolderviewModule };
-//# sourceMappingURL=ngx-folderview.mjs.map
