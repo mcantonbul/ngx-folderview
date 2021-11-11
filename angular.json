@@ -51,7 +51,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "baseHref": "ngx-folderview/dist/ngx-folderview-showcase/",
+            "baseHref": "/ngx-folderview/dist/ngx-folderview-showcase/",
             "outputPath": "dist/ngx-folderview-showcase",
             "index": "projects/ngx-folderview-showcase/src/index.html",
             "main": "projects/ngx-folderview-showcase/src/main.ts",
