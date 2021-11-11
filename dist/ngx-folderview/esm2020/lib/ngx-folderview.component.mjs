@@ -1,0 +1,132 @@
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { NgxFolderviewHelper } from './helpers/ngx-folderview.helper';
+import * as i0 from "@angular/core";
+import * as i1 from "./services/folderview.service";
+import * as i2 from "./services/folderview-event.service";
+import * as i3 from "./components/ngx-folderview-item/ngx-folderview-item.component";
+import * as i4 from "./directives/ngx-folderview-select.directive";
+import * as i5 from "@angular/common";
+import * as i6 from "@angular/forms";
+import * as i7 from "./directives/ngx-folderview-input-controller.directive";
+export class NgxFolderviewComponent {
+    constructor(ngxFolderviewService, ngxFolderviewEventService) {
+        this.ngxFolderviewService = ngxFolderviewService;
+        this.ngxFolderviewEventService = ngxFolderviewEventService;
+        this.onFolderCollapsed = new EventEmitter();
+        this.onFolderExpanded = new EventEmitter();
+        this.onFolderSelected = new EventEmitter();
+        this._createNewFolderHandler = (folder) => {
+            const findedFolder = this.findById(folder.id);
+            this.createNewFolder(findedFolder);
+        };
+        this._createNewSubFolderHandler = (folder) => {
+            const selectedFolderId = this.ngxFolderviewService.getSelectedFolderId();
+            if (!selectedFolderId) {
+            }
+            else {
+                const findedIndex = folder.children?.findIndex(s => s.id === selectedFolderId) || -1;
+                if (findedIndex < 0)
+                    return;
+                const selectedFolder = this.findById(selectedFolderId);
+                this.createNewFolder(selectedFolder);
+            }
+        };
+        this._removeFolderHandler = (folder) => {
+            this.removeById(folder.id);
+        };
+        this._folderMoveUpHandler = (folder) => {
+            this.moveUpById(folder.id);
+        };
+        this._folderMoveDownHandler = (folder) => {
+            this.moveDownById(folder.id);
+        };
+        this.ngxFolderviewEventService.folderCollapsed.subscribe((folder) => {
+            this.onFolderCollapsed.emit(folder);
+        });
+        this.ngxFolderviewEventService.folderExpanded.subscribe((folder) => {
+            this.onFolderExpanded.emit(folder);
+        });
+        this.ngxFolderviewEventService.newFolder.subscribe(this._createNewFolderHandler);
+        this.ngxFolderviewEventService.newSubFolder.subscribe(this._createNewSubFolderHandler);
+        this.ngxFolderviewEventService.removeFolder.subscribe(this._removeFolderHandler);
+        this.ngxFolderviewEventService.folderMoveUp.subscribe(this._folderMoveUpHandler);
+        this.ngxFolderviewEventService.folderMoveDown.subscribe(this._folderMoveDownHandler);
+    }
+    findById(id) {
+        let result;
+        const iter = (a) => {
+            if (a.id === id) {
+                result = a;
+                return true;
+            }
+            return Array.isArray(a.children) && a.children.some(iter);
+        };
+        this.dataSource.some(iter);
+        return result;
+    }
+    removeById(id) {
+        const iter = (item, index, arr) => {
+            if (item.id === id) {
+                arr.splice(index, 1);
+                return true;
+            }
+            return Array.isArray(item.children) && item.children.some(iter);
+        };
+        this.dataSource.some(iter);
+    }
+    moveUpById(id) {
+        const iter = (item, index, arr) => {
+            if (item.id === id) {
+                if (arr.length > 1 && index !== 0) {
+                    let temp = arr[index];
+                    arr[index] = arr[index - 1];
+                    arr[index - 1] = temp;
+                }
+                return true;
+            }
+            return Array.isArray(item.children) && item.children.some(iter);
+        };
+        this.dataSource.some(iter);
+    }
+    moveDownById(id) {
+        const iter = (item, index, arr) => {
+            if (item.id === id) {
+                if (arr.length > 1 && index !== arr.length - 1) {
+                    let temp = arr[index];
+                    arr[index] = arr[index + 1];
+                    arr[index + 1] = temp;
+                }
+                return true;
+            }
+            return Array.isArray(item.children) && item.children.some(iter);
+        };
+        this.dataSource.some(iter);
+    }
+    createNewFolder(folder) {
+        if (!folder.children) {
+            folder.children = new Array();
+        }
+        folder.children.push({
+            id: NgxFolderviewHelper.newGuid(),
+            title: "New Folder",
+            isEditMode: true
+        });
+    }
+}
+NgxFolderviewComponent.ɵfac = i0.ɵɵngDeclareFactory({ minVersion: "12.0.0", version: "13.0.0", ngImport: i0, type: NgxFolderviewComponent, deps: [{ token: i1.NgxFolderViewService }, { token: i2.NgxFolderViewEventService }], target: i0.ɵɵFactoryTarget.Component });
+NgxFolderviewComponent.ɵcmp = i0.ɵɵngDeclareComponent({ minVersion: "12.0.0", version: "13.0.0", type: NgxFolderviewComponent, selector: "ngx-folderview", inputs: { dataSource: "dataSource", customTemplate: "customTemplate" }, outputs: { onFolderCollapsed: "onFolderCollapsed", onFolderExpanded: "onFolderExpanded", onFolderSelected: "onFolderSelected" }, ngImport: i0, template: "<ng-template #defaultFolderTemplate let-folder=\"folder\" let-onCollapseExpand=\"onCollapseExpand\" let-onClickRemove=\"onClickRemove\" \r\nlet-onClickMoveUp=\"onClickMoveUp\" let-onClickMoveDown=\"onClickMoveDown\" let-isTopFolder=\"isTopFolder\">\r\n    <div class=\"default-folder-template\">\r\n        <span [hidden]=\"folder.isEditMode\" ngxFolderviewSelect [folder]=\"folder\">{{folder.title}}</span>\r\n        <input *ngIf=\"folder.isEditMode\" ngxFolderviewInputController [folder]=\"folder\" type=\"text\" class=\"folder-name-input\" [(ngModel)]=\"folder.title\">\r\n        <div class=\"actions\">\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickRemove()\">\r\n                <img src=\"./assets/times.png\" alt=\"image\">\r\n            </div>\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickMoveUp()\">\r\n                <img src=\"./assets/arrow-up.png\" alt=\"image\">\r\n            </div>\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickMoveDown()\">\r\n                <img src=\"./assets/arrow-down.png\" alt=\"image\">\r\n            </div>\r\n            <div (click)=\"onCollapseExpand()\" [ngSwitch]=\"folder.collapsed\" *ngIf=\"isTopFolder || folder.children?.length > 0\">\r\n                <img *ngIf=\"!folder.collapsed; else elseBlock\" src=\"./assets/expand.png\" alt=\"image\">\r\n                <ng-template #elseBlock>\r\n                    <img *ngIf=\"folder.collapsed\" src=\"./assets/collapse.png\" alt=\"image\">\r\n                </ng-template>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</ng-template>\r\n<ng-container *ngFor=\"let folder of dataSource\">\r\n    <ngx-folderview-item [folder]=\"folder\" [template]=\"defaultFolderTemplate || customTemplate\" [isTopFolder]=\"true\"></ngx-folderview-item>\r\n</ng-container>", styles: [".default-folder-template{display:flex;width:150px;align-items:center}.default-folder-template .actions{display:flex;margin-left:auto}.default-folder-template .actions>div{display:flex;align-items:center}.default-folder-template .actions>div>img{width:1.5rem;height:1.5rem}.default-folder-template span{-webkit-user-select:none;user-select:none}.default-folder-template span.selected{background-color:#0ff}.default-folder-template .folder-name-input{width:100px}\n"], components: [{ type: i3.NgxFolderviewItemComponent, selector: "ngx-folderview-item", inputs: ["folder", "template", "isTopFolder"] }], directives: [{ type: i4.NgxFolderviewSelectDirective, selector: "[ngxFolderviewSelect]", inputs: ["folder"] }, { type: i5.NgIf, selector: "[ngIf]", inputs: ["ngIf", "ngIfThen", "ngIfElse"] }, { type: i6.DefaultValueAccessor, selector: "input:not([type=checkbox])[formControlName],textarea[formControlName],input:not([type=checkbox])[formControl],textarea[formControl],input:not([type=checkbox])[ngModel],textarea[ngModel],[ngDefaultControl]" }, { type: i7.NgxFolderviewInputControllerDirective, selector: "[ngxFolderviewInputController]", inputs: ["folder"] }, { type: i6.NgControlStatus, selector: "[formControlName],[ngModel],[formControl]" }, { type: i6.NgModel, selector: "[ngModel]:not([formControlName]):not([formControl])", inputs: ["name", "disabled", "ngModel", "ngModelOptions"], outputs: ["ngModelChange"], exportAs: ["ngModel"] }, { type: i5.NgSwitch, selector: "[ngSwitch]", inputs: ["ngSwitch"] }, { type: i5.NgForOf, selector: "[ngFor][ngForOf]", inputs: ["ngForOf", "ngForTrackBy", "ngForTemplate"] }] });
+i0.ɵɵngDeclareClassMetadata({ minVersion: "12.0.0", version: "13.0.0", ngImport: i0, type: NgxFolderviewComponent, decorators: [{
+            type: Component,
+            args: [{ selector: 'ngx-folderview', template: "<ng-template #defaultFolderTemplate let-folder=\"folder\" let-onCollapseExpand=\"onCollapseExpand\" let-onClickRemove=\"onClickRemove\" \r\nlet-onClickMoveUp=\"onClickMoveUp\" let-onClickMoveDown=\"onClickMoveDown\" let-isTopFolder=\"isTopFolder\">\r\n    <div class=\"default-folder-template\">\r\n        <span [hidden]=\"folder.isEditMode\" ngxFolderviewSelect [folder]=\"folder\">{{folder.title}}</span>\r\n        <input *ngIf=\"folder.isEditMode\" ngxFolderviewInputController [folder]=\"folder\" type=\"text\" class=\"folder-name-input\" [(ngModel)]=\"folder.title\">\r\n        <div class=\"actions\">\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickRemove()\">\r\n                <img src=\"./assets/times.png\" alt=\"image\">\r\n            </div>\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickMoveUp()\">\r\n                <img src=\"./assets/arrow-up.png\" alt=\"image\">\r\n            </div>\r\n            <div *ngIf=\"!isTopFolder\" (click)=\"onClickMoveDown()\">\r\n                <img src=\"./assets/arrow-down.png\" alt=\"image\">\r\n            </div>\r\n            <div (click)=\"onCollapseExpand()\" [ngSwitch]=\"folder.collapsed\" *ngIf=\"isTopFolder || folder.children?.length > 0\">\r\n                <img *ngIf=\"!folder.collapsed; else elseBlock\" src=\"./assets/expand.png\" alt=\"image\">\r\n                <ng-template #elseBlock>\r\n                    <img *ngIf=\"folder.collapsed\" src=\"./assets/collapse.png\" alt=\"image\">\r\n                </ng-template>\r\n            </div>\r\n        </div>\r\n    </div>\r\n</ng-template>\r\n<ng-container *ngFor=\"let folder of dataSource\">\r\n    <ngx-folderview-item [folder]=\"folder\" [template]=\"defaultFolderTemplate || customTemplate\" [isTopFolder]=\"true\"></ngx-folderview-item>\r\n</ng-container>", styles: [".default-folder-template{display:flex;width:150px;align-items:center}.default-folder-template .actions{display:flex;margin-left:auto}.default-folder-template .actions>div{display:flex;align-items:center}.default-folder-template .actions>div>img{width:1.5rem;height:1.5rem}.default-folder-template span{-webkit-user-select:none;user-select:none}.default-folder-template span.selected{background-color:#0ff}.default-folder-template .folder-name-input{width:100px}\n"] }]
+        }], ctorParameters: function () { return [{ type: i1.NgxFolderViewService }, { type: i2.NgxFolderViewEventService }]; }, propDecorators: { dataSource: [{
+                type: Input
+            }], customTemplate: [{
+                type: Input
+            }], onFolderCollapsed: [{
+                type: Output
+            }], onFolderExpanded: [{
+                type: Output
+            }], onFolderSelected: [{
+                type: Output
+            }] } });
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibmd4LWZvbGRlcnZpZXcuY29tcG9uZW50LmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vcHJvamVjdHMvbmd4LWZvbGRlcnZpZXcvc3JjL2xpYi9uZ3gtZm9sZGVydmlldy5jb21wb25lbnQudHMiLCIuLi8uLi8uLi8uLi9wcm9qZWN0cy9uZ3gtZm9sZGVydmlldy9zcmMvbGliL25neC1mb2xkZXJ2aWV3LmNvbXBvbmVudC5odG1sIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiJBQUFBLE9BQU8sRUFBRSxTQUFTLEVBQUUsWUFBWSxFQUFFLEtBQUssRUFBVSxNQUFNLEVBQWUsTUFBTSxlQUFlLENBQUM7QUFDNUYsT0FBTyxFQUFFLG1CQUFtQixFQUFFLE1BQU0saUNBQWlDLENBQUM7Ozs7Ozs7OztBQVV0RSxNQUFNLE9BQU8sc0JBQXNCO0lBY2pDLFlBQW9CLG9CQUEwQyxFQUFVLHlCQUFvRDtRQUF4Ryx5QkFBb0IsR0FBcEIsb0JBQW9CLENBQXNCO1FBQVUsOEJBQXlCLEdBQXpCLHlCQUF5QixDQUEyQjtRQUxsSCxzQkFBaUIsR0FBRyxJQUFJLFlBQVksRUFBTyxDQUFDO1FBQzVDLHFCQUFnQixHQUFHLElBQUksWUFBWSxFQUFPLENBQUM7UUFDM0MscUJBQWdCLEdBQUcsSUFBSSxZQUFZLEVBQU8sQ0FBQztRQW1CN0MsNEJBQXVCLEdBQUcsQ0FBQyxNQUFxQixFQUFFLEVBQUU7WUFDMUQsTUFBTSxZQUFZLEdBQUcsSUFBSSxDQUFDLFFBQVEsQ0FBQyxNQUFNLENBQUMsRUFBRSxDQUFDLENBQUM7WUFDOUMsSUFBSSxDQUFDLGVBQWUsQ0FBQyxZQUFZLENBQUMsQ0FBQztRQUNyQyxDQUFDLENBQUE7UUFFTywrQkFBMEIsR0FBRyxDQUFDLE1BQXFCLEVBQUUsRUFBRTtZQUM3RCxNQUFNLGdCQUFnQixHQUFHLElBQUksQ0FBQyxvQkFBb0IsQ0FBQyxtQkFBbUIsRUFBRSxDQUFDO1lBQ3pFLElBQUksQ0FBQyxnQkFBZ0IsRUFBRTthQUN0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QU07Z0JBQ0csZ0JBQWdCO3NCQUF6QixNQUFNIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgQ29tcG9uZW50LCBFdmVudEVtaXR0ZXIsIElucHV0LCBPbkluaXQsIE91dHB1dCwgVGVtcGxhdGVSZWYgfSBmcm9tICdAYW5ndWxhci9jb3JlJztcbmltcG9ydCB7IE5neEZvbGRlcnZpZXdIZWxwZXIgfSBmcm9tICcuL2hlbHBlcnMvbmd4LWZvbGRlcnZpZXcuaGVscGVyJztcbmltcG9ydCB7IE5neEZvbGRlck5vZGUgfSBmcm9tICcuL21vZGVscy9uZ3gtZm9sZGVyLW5vZGUnO1xuaW1wb3J0IHsgTmd4Rm9sZGVyVmlld0V2ZW50U2VydmljZSB9IGZyb20gJy4vc2VydmljZXMvZm9sZGVydmlldy1ldmVudC5zZXJ2aWNlJztcbmltcG9ydCB7IE5neEZvbGRlclZpZXdTZXJ2aWNlIH0gZnJvbSAnLi9zZXJ2aWNlcy9mb2xkZXJ2aWV3LnNlcnZpY2UnO1xuXG5AQ29tcG9uZW50KHtcbiAgc2VsZWN0b3I6ICduZ3gtZm9sZGVydmlldycsXG4gIHRlbXBsYXRlVXJsOiAnLi9uZ3gtZm9sZGVydmlldy5jb21wb25lbnQuaHRtbCcsXG4gIHN0eWxlVXJsczogWycuL25neC1mb2xkZXJ2aWV3LmNvbXBvbmVudC5zY3NzJ11cbn0pXG5leHBvcnQgY2xhc3MgTmd4Rm9sZGVydmlld0NvbXBvbmVudCB7XG5cbiAgQElucHV0KCkgZGF0YVNvdXJjZTogQXJyYXk8Tmd4Rm9sZGVyTm9kZT5cblxuICAvKipcbiAgICogQFRPRE9cbiAgICovXG4gIEBJbnB1dCgpIGN1c3RvbVRlbXBsYXRlOiBUZW1wbGF0ZVJlZjxhbnk+O1xuXG4gIEBPdXRwdXQoKSBvbkZvbGRlckNvbGxhcHNlZCA9IG5ldyBFdmVudEVtaXR0ZXI8YW55PigpO1xuICBAT3V0cHV0KCkgb25Gb2xkZXJFeHBhbmRlZCA9IG5ldyBFdmVudEVtaXR0ZXI8YW55PigpO1xuICBAT3V0cHV0KCkgb25Gb2xkZXJTZWxlY3RlZCA9IG5ldyBFdmVudEVtaXR0ZXI8YW55PigpO1xuXG5cbiAgY29uc3RydWN0b3IocHJpdmF0ZSBuZ3hGb2xkZXJ2aWV3U2VydmljZTogTmd4Rm9sZGVyVmlld1NlcnZpY2UsIHByaXZhdGUgbmd4Rm9sZGVydmlld0V2ZW50U2VydmljZTogTmd4Rm9sZGVyVmlld0V2ZW50U2VydmljZSkge1xuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5mb2xkZXJDb2xsYXBzZWQuc3Vic2NyaWJlKChmb2xkZXI6IGFueSkgPT4ge1xuICAgICAgdGhpcy5vbkZvbGRlckNvbGxhcHNlZC5lbWl0KGZvbGRlcik7XG4gICAgfSk7XG5cbiAgICB0aGlzLm5neEZvbGRlcnZpZXdFdmVudFNlcnZpY2UuZm9sZGVyRXhwYW5kZWQuc3Vic2NyaWJlKChmb2xkZXI6IGFueSkgPT4ge1xuICAgICAgdGhpcy5vbkZvbGRlckV4cGFuZGVkLmVtaXQoZm9sZGVyKTtcbiAgICB9KTtcblxuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5uZXdGb2xkZXIuc3Vic2NyaWJlKHRoaXMuX2NyZWF0ZU5ld0ZvbGRlckhhbmRsZXIpO1xuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5uZXdTdWJGb2xkZXIuc3Vic2NyaWJlKHRoaXMuX2NyZWF0ZU5ld1N1YkZvbGRlckhhbmRsZXIpO1xuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5yZW1vdmVGb2xkZXIuc3Vic2NyaWJlKHRoaXMuX3JlbW92ZUZvbGRlckhhbmRsZXIpO1xuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5mb2xkZXJNb3ZlVXAuc3Vic2NyaWJlKHRoaXMuX2ZvbGRlck1vdmVVcEhhbmRsZXIpO1xuICAgIHRoaXMubmd4Rm9sZGVydmlld0V2ZW50U2VydmljZS5mb2xkZXJNb3ZlRG93bi5zdWJzY3JpYmUodGhpcy5fZm9sZGVyTW92ZURvd25IYW5kbGVyKTtcbiAgfVxuXG4gIHByaXZhdGUgX2NyZWF0ZU5ld0ZvbGRlckhhbmRsZXIgPSAoZm9sZGVyOiBOZ3hGb2xkZXJOb2RlKSA9PiB7XG4gICAgY29uc3QgZmluZGVkRm9sZGVyID0gdGhpcy5maW5kQnlJZChmb2xkZXIuaWQpO1xuICAgIHRoaXMuY3JlYXRlTmV3Rm9sZGVyKGZpbmRlZEZvbGRlcik7XG4gIH1cblxuICBwcml2YXRlIF9jcmVhdGVOZXdTdWJGb2xkZXJIYW5kbGVyID0gKGZvbGRlcjogTmd4Rm9sZGVyTm9kZSkgPT4ge1xuICAgIGNvbnN0IHNlbGVjdGVkRm9sZGVySWQgPSB0aGlzLm5neEZvbGRlcnZpZXdTZXJ2aWNlLmdldFNlbGVjdGVkRm9sZGVySWQoKTtcbiAgICBpZiAoIXNlbGVjdGVkRm9sZGVySWQpIHtcbiAgICB9IGVsc2Uge1xuICAgICAgY29uc3QgZmluZGVkSW5kZXggPSBmb2xkZXIuY2hpbGRyZW4/LmZpbmRJbmRleChzID0+IHMuaWQgPT09IHNlbGVjdGVkRm9sZGVySWQpIHx8IC0xO1xuICAgICAgaWYoZmluZGVkSW5kZXggPCAwKVxuICAgICAgICByZXR1cm47XG4gICAgICBjb25zdCBzZWxlY3RlZEZvbGRlciA9IHRoaXMuZmluZEJ5SWQoc2VsZWN0ZWRGb2xkZXJJZCk7XG4gICAgICB0aGlzLmNyZWF0ZU5ld0ZvbGRlcihzZWxlY3RlZEZvbGRlcik7XG4gICAgfVxuICB9XG5cbiAgcHJpdmF0ZSBfcmVtb3ZlRm9sZGVySGFuZGxlciA9IChmb2xkZXI6IE5neEZvbGRlck5vZGUpID0+IHtcbiAgICB0aGlzLnJlbW92ZUJ5SWQoZm9sZGVyLmlkKTtcbiAgfVxuXG4gIHByaXZhdGUgX2ZvbGRlck1vdmVVcEhhbmRsZXIgPSAoZm9sZGVyOiBOZ3hGb2xkZXJOb2RlKSA9PiB7XG4gICAgdGhpcy5tb3ZlVXBCeUlkKGZvbGRlci5pZCk7XG4gIH1cblxuICBwcml2YXRlIF9mb2xkZXJNb3ZlRG93bkhhbmRsZXIgPSAoZm9sZGVyOiBOZ3hGb2xkZXJOb2RlKSA9PiB7XG4gICAgdGhpcy5tb3ZlRG93bkJ5SWQoZm9sZGVyLmlkKTtcbiAgfVxuXG4gIGZpbmRCeUlkKGlkOiBhbnkpOiBOZ3hGb2xkZXJOb2RlIHtcbiAgICBsZXQgcmVzdWx0ITogTmd4Rm9sZGVyTm9kZTtcbiAgICBjb25zdCBpdGVyID0gKGE6IE5neEZvbGRlck5vZGUpID0+IHtcbiAgICAgIGlmIChhLmlkID09PSBpZCkge1xuICAgICAgICByZXN1bHQgPSBhO1xuICAgICAgICByZXR1cm4gdHJ1ZTtcbiAgICAgIH1cbiAgICAgIHJldHVybiBBcnJheS5pc0FycmF5KGEuY2hpbGRyZW4pICYmIGEuY2hpbGRyZW4uc29tZShpdGVyKTtcbiAgICB9XG4gICAgdGhpcy5kYXRhU291cmNlLnNvbWUoaXRlcik7XG4gICAgcmV0dXJuIHJlc3VsdDtcbiAgfVxuXG4gIHJlbW92ZUJ5SWQoaWQ6IGFueSkge1xuICAgIGNvbnN0IGl0ZXIgPSAoaXRlbTogTmd4Rm9sZGVyTm9kZSwgaW5kZXg6IG51bWJlciwgYXJyOiBBcnJheTxOZ3hGb2xkZXJOb2RlPikgPT4ge1xuICAgICAgaWYgKGl0ZW0uaWQgPT09IGlkKSB7XG4gICAgICAgIGFyci5zcGxpY2UoaW5kZXgsIDEpO1xuICAgICAgICByZXR1cm4gdHJ1ZTtcbiAgICAgIH1cbiAgICAgIHJldHVybiBBcnJheS5pc0FycmF5KGl0ZW0uY2hpbGRyZW4pICYmIGl0ZW0uY2hpbGRyZW4uc29tZShpdGVyKTtcbiAgICB9XG4gICAgdGhpcy5kYXRhU291cmNlLnNvbWUoaXRlcik7XG4gIH1cblxuICBtb3ZlVXBCeUlkKGlkOiBhbnkpIHtcbiAgICBjb25zdCBpdGVyID0gKGl0ZW06IE5neEZvbGRlck5vZGUsIGluZGV4OiBudW1iZXIsIGFycjogQXJyYXk8Tmd4Rm9sZGVyTm9kZT4pID0+IHtcbiAgICAgIGlmIChpdGVtLmlkID09PSBpZCkge1xuICAgICAgICBpZihhcnIubGVuZ3RoID4gMSAmJiBpbmRleCAhPT0gMCkge1xuICAgICAgICAgIGxldCB0ZW1wPSBhcnJbaW5kZXhdO1xuICAgICAgICAgIGFycltpbmRleF0gPSBhcnJbaW5kZXggLTFdO1xuICAgICAgICAgIGFycltpbmRleCAtIDFdID0gdGVtcDtcbiAgICAgICAgfSBcbiAgICAgICAgcmV0dXJuIHRydWU7XG4gICAgICB9XG4gICAgICByZXR1cm4gQXJyYXkuaXNBcnJheShpdGVtLmNoaWxkcmVuKSAmJiBpdGVtLmNoaWxkcmVuLnNvbWUoaXRlcik7XG4gICAgfVxuICAgIHRoaXMuZGF0YVNvdXJjZS5zb21lKGl0ZXIpO1xuICB9XG5cbiAgbW92ZURvd25CeUlkKGlkOiBhbnkpIHtcbiAgICBjb25zdCBpdGVyID0gKGl0ZW06IE5neEZvbGRlck5vZGUsIGluZGV4OiBudW1iZXIsIGFycjogQXJyYXk8Tmd4Rm9sZGVyTm9kZT4pID0+IHtcbiAgICAgIGlmIChpdGVtLmlkID09PSBpZCkge1xuICAgICAgICBpZihhcnIubGVuZ3RoID4gMSAmJiBpbmRleCAhPT0gYXJyLmxlbmd0aCAtIDEpIHtcbiAgICAgICAgICBsZXQgdGVtcD0gYXJyW2luZGV4XTtcbiAgICAgICAgICBhcnJbaW5kZXhdID0gYXJyW2luZGV4ICsgMV07XG4gICAgICAgICAgYXJyW2luZGV4ICsgMV0gPSB0ZW1wO1xuICAgICAgICB9IFxuICAgICAgICByZXR1cm4gdHJ1ZTtcbiAgICAgIH1cbiAgICAgIHJldHVybiBBcnJheS5pc0FycmF5KGl0ZW0uY2hpbGRyZW4pICYmIGl0ZW0uY2hpbGRyZW4uc29tZShpdGVyKTtcbiAgICB9XG4gICAgdGhpcy5kYXRhU291cmNlLnNvbWUoaXRlcik7XG4gIH1cblxuICBjcmVhdGVOZXdGb2xkZXIoZm9sZGVyOiBOZ3hGb2xkZXJOb2RlKSB7XG4gICAgaWYgKCFmb2xkZXIuY2hpbGRyZW4pIHtcbiAgICAgIGZvbGRlci5jaGlsZHJlbiA9IG5ldyBBcnJheTxOZ3hGb2xkZXJOb2RlPigpO1xuICAgIH1cbiAgICBmb2xkZXIuY2hpbGRyZW4ucHVzaCh7XG4gICAgICBpZDogTmd4Rm9sZGVydmlld0hlbHBlci5uZXdHdWlkKCksXG4gICAgICB0aXRsZTogXCJOZXcgRm9sZGVyXCIsXG4gICAgICBpc0VkaXRNb2RlOiB0cnVlXG4gICAgfSlcbiAgfVxufVxuIiwiPG5nLXRlbXBsYXRlICNkZWZhdWx0Rm9sZGVyVGVtcGxhdGUgbGV0LWZvbGRlcj1cImZvbGRlclwiIGxldC1vbkNvbGxhcHNlRXhwYW5kPVwib25Db2xsYXBzZUV4cGFuZFwiIGxldC1vbkNsaWNrUmVtb3ZlPVwib25DbGlja1JlbW92ZVwiIFxyXG5sZXQtb25DbGlja01vdmVVcD1cIm9uQ2xpY2tNb3ZlVXBcIiBsZXQtb25DbGlja01vdmVEb3duPVwib25DbGlja01vdmVEb3duXCIgbGV0LWlzVG9wRm9sZGVyPVwiaXNUb3BGb2xkZXJcIj5cclxuICAgIDxkaXYgY2xhc3M9XCJkZWZhdWx0LWZvbGRlci10ZW1wbGF0ZVwiPlxyXG4gICAgICAgIDxzcGFuIFtoaWRkZW5dPVwiZm9sZGVyLmlzRWRpdE1vZGVcIiBuZ3hGb2xkZXJ2aWV3U2VsZWN0IFtmb2xkZXJdPVwiZm9sZGVyXCI+e3tmb2xkZXIudGl0bGV9fTwvc3Bhbj5cclxuICAgICAgICA8aW5wdXQgKm5nSWY9XCJmb2xkZXIuaXNFZGl0TW9kZVwiIG5neEZvbGRlcnZpZXdJbnB1dENvbnRyb2xsZXIgW2ZvbGRlcl09XCJmb2xkZXJcIiB0eXBlPVwidGV4dFwiIGNsYXNzPVwiZm9sZGVyLW5hbWUtaW5wdXRcIiBbKG5nTW9kZWwpXT1cImZvbGRlci50aXRsZVwiPlxyXG4gICAgICAgIDxkaXYgY2xhc3M9XCJhY3Rpb25zXCI+XHJcbiAgICAgICAgICAgIDxkaXYgKm5nSWY9XCIhaXNUb3BGb2xkZXJcIiAoY2xpY2spPVwib25DbGlja1JlbW92ZSgpXCI+XHJcbiAgICAgICAgICAgICAgICA8aW1nIHNyYz1cIi4vYXNzZXRzL3RpbWVzLnBuZ1wiIGFsdD1cImltYWdlXCI+XHJcbiAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgICA8ZGl2ICpuZ0lmPVwiIWlzVG9wRm9sZGVyXCIgKGNsaWNrKT1cIm9uQ2xpY2tNb3ZlVXAoKVwiPlxyXG4gICAgICAgICAgICAgICAgPGltZyBzcmM9XCIuL2Fzc2V0cy9hcnJvdy11cC5wbmdcIiBhbHQ9XCJpbWFnZVwiPlxyXG4gICAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICAgICAgPGRpdiAqbmdJZj1cIiFpc1RvcEZvbGRlclwiIChjbGljayk9XCJvbkNsaWNrTW92ZURvd24oKVwiPlxyXG4gICAgICAgICAgICAgICAgPGltZyBzcmM9XCIuL2Fzc2V0cy9hcnJvdy1kb3duLnBuZ1wiIGFsdD1cImltYWdlXCI+XHJcbiAgICAgICAgICAgIDwvZGl2PlxyXG4gICAgICAgICAgICA8ZGl2IChjbGljayk9XCJvbkNvbGxhcHNlRXhwYW5kKClcIiBbbmdTd2l0Y2hdPVwiZm9sZGVyLmNvbGxhcHNlZFwiICpuZ0lmPVwiaXNUb3BGb2xkZXIgfHwgZm9sZGVyLmNoaWxkcmVuPy5sZW5ndGggPiAwXCI+XHJcbiAgICAgICAgICAgICAgICA8aW1nICpuZ0lmPVwiIWZvbGRlci5jb2xsYXBzZWQ7IGVsc2UgZWxzZUJsb2NrXCIgc3JjPVwiLi9hc3NldHMvZXhwYW5kLnBuZ1wiIGFsdD1cImltYWdlXCI+XHJcbiAgICAgICAgICAgICAgICA8bmctdGVtcGxhdGUgI2Vsc2VCbG9jaz5cclxuICAgICAgICAgICAgICAgICAgICA8aW1nICpuZ0lmPVwiZm9sZGVyLmNvbGxhcHNlZFwiIHNyYz1cIi4vYXNzZXRzL2NvbGxhcHNlLnBuZ1wiIGFsdD1cImltYWdlXCI+XHJcbiAgICAgICAgICAgICAgICA8L25nLXRlbXBsYXRlPlxyXG4gICAgICAgICAgICA8L2Rpdj5cclxuICAgICAgICA8L2Rpdj5cclxuICAgIDwvZGl2PlxyXG48L25nLXRlbXBsYXRlPlxyXG48bmctY29udGFpbmVyICpuZ0Zvcj1cImxldCBmb2xkZXIgb2YgZGF0YVNvdXJjZVwiPlxyXG4gICAgPG5neC1mb2xkZXJ2aWV3LWl0ZW0gW2ZvbGRlcl09XCJmb2xkZXJcIiBbdGVtcGxhdGVdPVwiZGVmYXVsdEZvbGRlclRlbXBsYXRlIHx8IGN1c3RvbVRlbXBsYXRlXCIgW2lzVG9wRm9sZGVyXT1cInRydWVcIj48L25neC1mb2xkZXJ2aWV3LWl0ZW0+XHJcbjwvbmctY29udGFpbmVyPiJdfQ==
