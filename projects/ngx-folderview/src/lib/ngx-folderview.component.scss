@@ -1,0 +1,23 @@
+.default-folder-template {
+    display: flex;
+    width: 150px;
+    align-items: center;
+    .actions {
+        display: flex;
+        margin-left: auto;
+        > div {
+            display: flex;
+            align-items: center;
+            > img { width: 1.5rem; height: 1.5rem;}
+        }
+    }
+    span {
+        user-select: none;
+        &.selected {
+            background-color: cyan;
+        }
+    }
+    .folder-name-input {
+        width: 100px;
+    }
+}

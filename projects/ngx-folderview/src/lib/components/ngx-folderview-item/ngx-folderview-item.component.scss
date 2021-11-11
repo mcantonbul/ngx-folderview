@@ -1,0 +1,10 @@
+.ngx-folderview-item {
+    display: block;
+    .ngx-folderview-item {
+        margin-left: 2rem;
+    }
+    .end-of-leaf {
+        margin-left: 2rem;
+        > img { width: 1.5rem; height: 1.5rem;}
+    }
+}

@@ -1,0 +1,12 @@
+<div class="ngx-folderview-item">
+    <ng-template [ngTemplateOutlet]="template"
+        [ngTemplateOutletContext]="{folder: folder, onCollapseExpand: onCollapseExpand, onClickRemove: onClickRemove, onClickMoveUp:onClickMoveUp, onClickMoveDown:onClickMoveDown, isTopFolder:isTopFolder}">
+    </ng-template>
+    <div *ngIf="(isTopFolder && !folder.collapsed) || (!folder.collapsed && folder.children?.length > 0)">
+        <ngx-folderview-item *ngFor="let folder of folder.children" [folder]="folder" [template]="template"></ngx-folderview-item>
+        <div class="end-of-leaf">
+            <img (click)="onClickNewFolder()" src="./assets/collapse.png" alt="image">
+            <img (click)="onClickNewSubFolder()" src="./assets/save.png" alt="save">
+        </div>
+    </div>
+</div>

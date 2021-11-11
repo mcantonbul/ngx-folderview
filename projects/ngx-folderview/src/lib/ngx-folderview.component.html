@@ -1,0 +1,27 @@
+<ng-template #defaultFolderTemplate let-folder="folder" let-onCollapseExpand="onCollapseExpand" let-onClickRemove="onClickRemove" 
+let-onClickMoveUp="onClickMoveUp" let-onClickMoveDown="onClickMoveDown" let-isTopFolder="isTopFolder">
+    <div class="default-folder-template">
+        <span [hidden]="folder.isEditMode" ngxFolderviewSelect [folder]="folder">{{folder.title}}</span>
+        <input *ngIf="folder.isEditMode" ngxFolderviewInputController [folder]="folder" type="text" class="folder-name-input" [(ngModel)]="folder.title">
+        <div class="actions">
+            <div *ngIf="!isTopFolder" (click)="onClickRemove()">
+                <img src="./assets/times.png" alt="image">
+            </div>
+            <div *ngIf="!isTopFolder" (click)="onClickMoveUp()">
+                <img src="./assets/arrow-up.png" alt="image">
+            </div>
+            <div *ngIf="!isTopFolder" (click)="onClickMoveDown()">
+                <img src="./assets/arrow-down.png" alt="image">
+            </div>
+            <div (click)="onCollapseExpand()" [ngSwitch]="folder.collapsed" *ngIf="isTopFolder || folder.children?.length > 0">
+                <img *ngIf="!folder.collapsed; else elseBlock" src="./assets/expand.png" alt="image">
+                <ng-template #elseBlock>
+                    <img *ngIf="folder.collapsed" src="./assets/collapse.png" alt="image">
+                </ng-template>
+            </div>
+        </div>
+    </div>
+</ng-template>
+<ng-container *ngFor="let folder of dataSource">
+    <ngx-folderview-item [folder]="folder" [template]="defaultFolderTemplate || customTemplate" [isTopFolder]="true"></ngx-folderview-item>
+</ng-container>
